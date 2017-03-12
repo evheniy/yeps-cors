@@ -64,6 +64,8 @@ module.exports = (options = {}) => {
             origin = options.origin ? await options.origin : requestOrigin;
         }
 
+        debug(`origin: ${origin}`);
+
         debug(context.req.method);
 
         if (context.req.method !== 'OPTIONS') {

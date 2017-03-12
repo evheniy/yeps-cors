@@ -11,15 +11,15 @@ let app;
 
 describe('YEPS cors test', async () => {
 
-    beforeEach(() => {
-        app = new App();
-        app.all([
-            error(),
-            cors(),
-        ]);
-    });
-
     describe('default options', async () => {
+
+        beforeEach(() => {
+            app = new App();
+            app.all([
+                error(),
+                cors(),
+            ]);
+        });
 
         it('should not set `Access-Control-Allow-Origin` when request Origin header missing', async () => {
             let isTestFinished1 = false;
@@ -129,7 +129,7 @@ describe('YEPS cors test', async () => {
             });
 
             await chai.request(http.createServer(app.resolve()))
-                .options('/')
+                .get('/')
                 .set('Origin', 'http://makedev.org')
                 .send()
                 .then(res => {
@@ -144,8 +144,104 @@ describe('YEPS cors test', async () => {
 
     });
 
-    describe('options.origin=*', async () => {});
-    describe('options.origin=function', async () => {});
+    describe('options.origin=*', async () => {
+
+        beforeEach(() => {
+            app = new App();
+            app.all([
+                error(),
+                cors({ origin: '*' }),
+            ]);
+        });
+
+        it('should always set `Access-Control-Allow-Origin` to *', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .get('/')
+                .set('Origin', 'http://makedev.org')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(200);
+                    expect(res.headers['access-control-allow-origin']).to.be.equal('*');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+
+    });
+
+    describe('options.origin=function', async () => {
+
+        beforeEach(() => {
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    origin(ctx) {
+                        return ctx.req.url !== '/forbin' ? '*' : false;
+                    }
+                }),
+            ]);
+        });
+
+        it('should disable cors', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .get('/forbin')
+                .set('Origin', 'http://makedev.org')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(200);
+                    expect(res.headers['access-control-allow-origin']).is.undefined;
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should set access-control-allow-origin to *', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .get('/')
+                .set('Origin', 'http://makedev.org')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(200);
+                    expect(res.headers['access-control-allow-origin']).to.be.equal('*');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+    });
+
     describe('options.exposeHeaders', async () => {});
     describe('options.maxAge', async () => {});
     describe('options.credentials', async () => {});
