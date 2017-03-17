@@ -1,6 +1,6 @@
 {
   "name": "yeps-cors",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "YEPS Cross-Origin Resource Sharing (CORS)",
   "main": "index.js",
   "scripts": {
@@ -66,7 +66,9 @@
     "sinon": "^1.17.7"
   },
   "dependencies": {
+    "debug": "^2.6.3",
+    "vary": "^1.1.0",
     "yeps": "^1.0.0",
-    "yeps-error": "^1.0.0"
+    "yeps-error": "^1.2.0"
   }
 }

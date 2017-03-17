@@ -242,11 +242,531 @@ describe('YEPS cors test', async () => {
 
     });
 
-    describe('options.exposeHeaders', async () => {});
-    describe('options.maxAge', async () => {});
-    describe('options.credentials', async () => {});
-    describe('options.allowHeaders', async () => {});
-    describe('options.allowMethods', async () => {});
-    describe('other middleware has been set `Vary` header to Accept-Encoding', () => {});
+    describe('options.exposeHeaders', async () => {
+
+        it('should Access-Control-Expose-Headers: `content-length`', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    exposeHeaders: 'content-length',
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .get('/')
+                .set('Origin', 'http://makedev.org')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(200);
+                    expect(res.headers['access-control-expose-headers']).to.be.equal('content-length');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should work with array', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    exposeHeaders: ['content-length', 'x-header'],
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .get('/')
+                .set('Origin', 'http://makedev.org')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(200);
+                    expect(res.headers['access-control-expose-headers']).to.be.equal('content-length,x-header');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+    });
+
+    describe('options.maxAge', async () => {
+
+        it('should set maxAge with number', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    maxAge: 3600,
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(204);
+                    expect(res.headers['access-control-max-age']).to.be.equal('3600');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should set maxAge with string', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    maxAge: '3600',
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(204);
+                    expect(res.headers['access-control-max-age']).to.be.equal('3600');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should not set maxAge on simple request', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    maxAge: '3600',
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .get('/')
+                .set('Origin', 'http://makedev.org')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(200);
+                    expect(res.headers['access-control-max-age']).to.be.undefined;
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+    });
+
+    describe('options.credentials', async () => {
+
+        beforeEach(async () => {
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    credentials: true,
+                }),
+            ]);
+        });
+
+        it('should enable Access-Control-Allow-Credentials on Simple request', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .get('/')
+                .set('Origin', 'http://makedev.org')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(200);
+                    expect(res.headers['access-control-allow-credentials']).to.be.equal('true');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should enable Access-Control-Allow-Credentials on Preflight request', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'DELETE')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(204);
+                    expect(res.headers['access-control-allow-credentials']).to.be.equal('true');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+    });
+
+    describe('options.allowHeaders', async () => {
+
+        it('should work with allowHeaders is string', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    allowHeaders: 'X-PINGOTHER',
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(204);
+                    expect(res.headers['access-control-allow-headers']).to.be.equal('X-PINGOTHER');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should work with allowHeaders is array', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    allowHeaders: ['X-PINGOTHER'],
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(204);
+                    expect(res.headers['access-control-allow-headers']).to.be.equal('X-PINGOTHER');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should set Access-Control-Allow-Headers to request access-control-request-headers header', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors(),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .set('access-control-request-headers', 'X-PINGOTHER')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(204);
+                    expect(res.headers['access-control-allow-headers']).to.be.equal('X-PINGOTHER');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+    });
+
+    describe('options.allowMethods', async () => {
+
+        it('should work with allowMethods is string', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    allowMethods: 'POST',
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(204);
+                    expect(res.headers['access-control-allow-methods']).to.be.equal('POST');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should work with allowMethods is array', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    allowMethods: ['GET', 'POST'],
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(204);
+                    expect(res.headers['access-control-allow-methods']).to.be.equal('GET,POST');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should skip allowMethods', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors({
+                    allowMethods: null,
+                }),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.end();
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(204);
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+    });
+
+    describe('options.headersKeptOnError', () => {
+
+        it('should keep CORS headers after an error', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors(),
+            ]);
+
+            app.then(async () => {
+                isTestFinished1 = true;
+                throw new Error('Whoops!');
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .get('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .send()
+                .catch(err => {
+                    expect(err).to.have.status(500);
+                    expect(err.response.headers['access-control-allow-origin']).to.be.equal('http://makedev.org');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+        it('should not affect OPTIONS requests', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+
+            app = new App();
+            app.all([
+                error(),
+                cors(),
+            ]);
+
+            app.then(async () => {
+                isTestFinished1 = true;
+                throw new Error('Whoops!');
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .options('/')
+                .set('Origin', 'http://makedev.org')
+                .set('Access-Control-Request-Method', 'PUT')
+                .send()
+                .catch(err => {
+                    expect(err).to.have.status(500);
+                    expect(err.response.headers['access-control-allow-origin']).to.be.equal('http://makedev.org');
+                    isTestFinished2 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+        });
+
+    });
+
+    describe('other middleware has been set `Vary` header to Accept-Encoding', () => {
+
+        it('should append `Vary` header to Origin', async () => {
+            let isTestFinished1 = false;
+            let isTestFinished2 = false;
+            let isTestFinished3 = false;
+
+            app = new App();
+            app.then(async ctx => {
+                isTestFinished1 = true;
+                ctx.res.setHeader('Vary', 'Accept-Encoding');
+            });
+            app.all([
+                error(),
+                cors(),
+            ]);
+
+            app.then(async ctx => {
+                isTestFinished2 = true;
+                ctx.res.end('');
+            });
+
+            await chai.request(http.createServer(app.resolve()))
+                .get('/')
+                .set('Origin', 'http://makedev.org')
+                .send()
+                .then(res => {
+                    expect(res).to.have.status(200);
+                    expect(res.headers.vary).to.be.equal('Accept-Encoding, Origin');
+                    isTestFinished3 = true;
+                });
+
+            expect(isTestFinished1).is.true;
+            expect(isTestFinished2).is.true;
+            expect(isTestFinished3).is.true;
+        });
+
+    });
 
 });

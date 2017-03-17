@@ -1,4 +1,5 @@
 const debug = require('debug')('yeps:cors');
+const vary = require('vary');
 
 /**
  * CORS middleware
@@ -46,7 +47,7 @@ module.exports = (options = {}) => {
 
         const requestOrigin = context.req.headers.origin;
 
-        context.res.setHeader('Vary', 'Origin');
+        vary(context.res, 'Origin');
 
         if (!requestOrigin) {
             return Promise.resolve();
@@ -102,7 +103,7 @@ module.exports = (options = {}) => {
             let allowHeaders = options.allowHeaders;
 
             if (!allowHeaders) {
-                allowHeaders = context.req.headers['access-control-allow-headers'];
+                allowHeaders = context.req.headers['access-control-request-headers'];
             }
 
             if (allowHeaders) {

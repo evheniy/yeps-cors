@@ -61,7 +61,68 @@ Run app (node.js > 7.6.0):
 
     node app.js
 
+## Config
 
+### {String|Function(ctx)} origin `Access-Control-Allow-Origin`, default is request Origin header
+
+    cors({ origin: '*' })
+    
+    cors({
+        origin(ctx) {
+            return ctx.req.url !== '/forbin' ? '*' : false;
+        }
+    })
+    
+### {String|Array} allowMethods `Access-Control-Allow-Methods`, default is 'GET,HEAD,PUT,POST,DELETE,PATCH'
+
+    cors({
+            allowMethods: 'GET',
+    })
+
+    cors({
+        allowMethods: ['GET', 'POST'],
+    })
+                
+    cors({
+        allowMethods: null,
+    })
+
+### {String|Array} exposeHeaders `Access-Control-Expose-Headers`
+    
+    cors({
+        exposeHeaders: 'content-length',
+    })
+    
+    cors({
+        exposeHeaders: ['content-length', 'x-header'],
+    })
+    
+### {String|Array} allowHeaders `Access-Control-Allow-Headers`
+    
+    cors({
+        allowHeaders: 'X-PINGOTHER',
+    })
+                
+    cors({
+        allowHeaders: ['X-PINGOTHER'],
+    })
+
+### {String|Number} maxAge `Access-Control-Max-Age` in seconds
+
+    cors({
+        maxAge: 3600,
+    })
+                    
+    cors({
+        maxAge: '3600',
+    })
+
+### {Boolean} credentials `Access-Control-Allow-Credentials`
+
+    cors({
+        credentials: true,
+    })
+                
 ## Links
 
 * [yeps](https://github.com/evheniy/yeps) - YEPS
