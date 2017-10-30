@@ -14,110 +14,106 @@ const vary = require('vary');
  * @returns {Function} cors middleware
  */
 module.exports = (options = {}) => {
-    debug('Options validation');
+  debug('Options validation');
+  debug(options);
+
+  const defaults = {
+    allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
+  };
+
+  options = Object.assign({}, defaults, options);
+
+  if (Array.isArray(options.exposeHeaders)) {
+    options.exposeHeaders = options.exposeHeaders.join(',');
+  }
+
+  if (Array.isArray(options.allowMethods)) {
+    options.allowMethods = options.allowMethods.join(',');
+  }
+
+  if (Array.isArray(options.allowHeaders)) {
+    options.allowHeaders = options.allowHeaders.join(',');
+  }
+
+  if (options.maxAge) {
+    options.maxAge = String(options.maxAge);
+  }
+
+  options.credentials = !!options.credentials;
+
+  return async (context) => {
+    debug('Adding headers');
     debug(options);
 
-    const defaults = {
-        allowMethods: 'GET,HEAD,PUT,POST,DELETE,PATCH',
-    };
+    const requestOrigin = context.req.headers.origin;
 
-    options = Object.assign({}, defaults, options);
+    vary(context.res, 'Origin');
 
-    if (Array.isArray(options.exposeHeaders)) {
-        options.exposeHeaders = options.exposeHeaders.join(',');
+    if (!requestOrigin) {
+      return Promise.resolve();
     }
 
-    if (Array.isArray(options.allowMethods)) {
-        options.allowMethods = options.allowMethods.join(',');
-    }
+    let origin;
 
-    if (Array.isArray(options.allowHeaders)) {
-        options.allowHeaders = options.allowHeaders.join(',');
-    }
+    if (typeof options.origin === 'function') {
+      origin = options.origin(context);
 
-    if (options.maxAge) {
-        options.maxAge = String(options.maxAge);
-    }
-
-    options.credentials = !!options.credentials;
-
-    return async context => {
-        debug('Adding headers');
-        debug(options);
-
-        const requestOrigin = context.req.headers.origin;
-
-        vary(context.res, 'Origin');
-
-        if (!requestOrigin) {
-            return Promise.resolve();
-        }
-
-        let origin;
-
-        if (typeof options.origin === 'function') {
-            origin = options.origin(context);
-
-            if (!origin) {
-                return Promise.resolve();
-            }
-        } else {
-            origin = options.origin ? await options.origin : requestOrigin;
-        }
-
-        debug(`origin: ${origin}`);
-
-        debug(context.req.method);
-
-        if (context.req.method !== 'OPTIONS') {
-            context.res.setHeader('Access-Control-Allow-Origin', origin);
-
-            if (options.credentials === true) {
-                context.res.setHeader('Access-Control-Allow-Credentials', 'true');
-            }
-
-            if (options.exposeHeaders) {
-                context.res.setHeader('Access-Control-Expose-Headers', options.exposeHeaders);
-            }
-
-        } else {
-
-            if (!context.req.headers['access-control-request-method']) {
-                return Promise.resolve();
-            }
-
-            context.res.setHeader('Access-Control-Allow-Origin', origin);
-
-            if (options.credentials === true) {
-                context.res.setHeader('Access-Control-Allow-Credentials', 'true');
-            }
-
-            if (options.maxAge) {
-                context.res.setHeader('Access-Control-Max-Age', options.maxAge);
-            }
-
-            if (options.allowMethods) {
-                context.res.setHeader('Access-Control-Allow-Methods', options.allowMethods);
-            }
-
-            let allowHeaders = options.allowHeaders;
-
-            if (!allowHeaders) {
-                allowHeaders = context.req.headers['access-control-request-headers'];
-            }
-
-            if (allowHeaders) {
-                context.res.setHeader('Access-Control-Allow-Headers', allowHeaders);
-            }
-
-            context.res.statusCode = 204;
-        }
-
-        debug(context.res._headers);
-        debug(context.res.statusCode);
-
+      if (!origin) {
         return Promise.resolve();
+      }
+    } else {
+      origin = options.origin ? await options.origin : requestOrigin;
+    }
 
-    };
+    debug(`origin: ${origin}`);
 
+    debug(context.req.method);
+
+    if (context.req.method !== 'OPTIONS') {
+      context.res.setHeader('Access-Control-Allow-Origin', origin);
+
+      if (options.credentials === true) {
+        context.res.setHeader('Access-Control-Allow-Credentials', 'true');
+      }
+
+      if (options.exposeHeaders) {
+        context.res.setHeader('Access-Control-Expose-Headers', options.exposeHeaders);
+      }
+    } else {
+      if (!context.req.headers['access-control-request-method']) {
+        return Promise.resolve();
+      }
+
+      context.res.setHeader('Access-Control-Allow-Origin', origin);
+
+      if (options.credentials === true) {
+        context.res.setHeader('Access-Control-Allow-Credentials', 'true');
+      }
+
+      if (options.maxAge) {
+        context.res.setHeader('Access-Control-Max-Age', options.maxAge);
+      }
+
+      if (options.allowMethods) {
+        context.res.setHeader('Access-Control-Allow-Methods', options.allowMethods);
+      }
+
+      let { allowHeaders } = options;
+
+      if (!allowHeaders) {
+        allowHeaders = context.req.headers['access-control-request-headers'];
+      }
+
+      if (allowHeaders) {
+        context.res.setHeader('Access-Control-Allow-Headers', allowHeaders);
+      }
+
+      context.res.statusCode = 204;
+    }
+
+    debug(context.res._headers);
+    debug(context.res.statusCode);
+
+    return Promise.resolve();
+  };
 };

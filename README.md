@@ -23,17 +23,16 @@ YEPS Cross-Origin Resource Sharing (CORS)
 
 ## How to install
 
-  npm i -S yeps-cors
+    npm i -S yeps-cors
   
 ## How to use
 
-app.js
-
-    const http = require('http');
     const App = require('yeps');
     const Router = require('yeps-router');
-    const logger = require('yeps-logger');
+    
     const error = require('yeps-error');
+    const logger = require('yeps-logger');
+    const server = require('yeps-server');
     
     const cors = require('yeps-cors');
     
@@ -41,99 +40,82 @@ app.js
     const router = new Router();
     
     app.all([
-        logger(),
         error(),
-        cors()
+        logger(),
+        cors(),
     ]);
     
-    router.get('/url').then(async ctx => {
-        ctx.res.writeHead(200);
+    router.get('/url').then(async (ctx) => {
+        ctx.res.statusCode = 200;
         ctx.res.end(data); 
     });
     
     app.then(router.resolve());
     
-    http
-        .createServer(app.resolve())
-        .listen(parseInt(process.env.PORT || '3000', 10));
-        
-Run app (node.js > 7.6.0):
+    server.createHttpServer(app);
 
-    node app.js
 
 ## Config
 
 ### {String|Function(ctx)} origin `Access-Control-Allow-Origin`, default is request Origin header
 
-    cors({ origin: '*' })
+    cors({ origin: '*' });
     
     cors({
         origin(ctx) {
             return ctx.req.url !== '/forbin' ? '*' : false;
-        }
-    })
+        },
+    });
     
 ### {String|Array} allowMethods `Access-Control-Allow-Methods`, default is 'GET,HEAD,PUT,POST,DELETE,PATCH'
 
     cors({
-            allowMethods: 'GET',
-    })
+        allowMethods: 'GET',
+    });
 
     cors({
         allowMethods: ['GET', 'POST'],
-    })
+    });
                 
     cors({
         allowMethods: null,
-    })
+    });
 
 ### {String|Array} exposeHeaders `Access-Control-Expose-Headers`
     
     cors({
         exposeHeaders: 'content-length',
-    })
+    });
     
     cors({
         exposeHeaders: ['content-length', 'x-header'],
-    })
+    });
     
 ### {String|Array} allowHeaders `Access-Control-Allow-Headers`
     
     cors({
         allowHeaders: 'X-PINGOTHER',
-    })
+    });
                 
     cors({
         allowHeaders: ['X-PINGOTHER'],
-    })
+    });
 
 ### {String|Number} maxAge `Access-Control-Max-Age` in seconds
 
     cors({
         maxAge: 3600,
-    })
+    });
                     
     cors({
         maxAge: '3600',
-    })
+    });
 
 ### {Boolean} credentials `Access-Control-Allow-Credentials`
 
     cors({
         credentials: true,
-    })
+    });
                 
-## Links
 
-* [yeps](https://github.com/evheniy/yeps) - YEPS
-* [yeps-promisify](https://github.com/evheniy/yeps-promisify) - YEPS kernel
-* [yeps-benchmark](https://github.com/evheniy/yeps-benchmark) - performance comparison koa2, express and node http
-* [yeps-router](https://github.com/evheniy/yeps-router) - YEPS promise based router
-* [yeps-error](https://github.com/evheniy/yeps-error) - YEPS 404/500 error handler
-* [yeps-redis](https://github.com/evheniy/yeps-redis) - YEPS promise based redis client
-* [yeps-mysql](https://github.com/evheniy/yeps-mysql) - YEPS promise based mysql client
-* [yeps-boilerplate](https://github.com/evheniy/yeps-boilerplate) - YEPS app boilerplate
-* [yeps-express-wrapper](https://github.com/evheniy/yeps-express-wrapper) - YEPS express wrapper
-* [CORS](https://developer.mozilla.org/en/docs/Web/HTTP/Access_control_CORS) - MDN documentation
-     
-     
+#### [YEPS documentation](http://yeps.info/)   
